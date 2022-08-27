@@ -26,7 +26,7 @@ void read_lines (FILE *fpin, Line *lines){
     char *cur_str = (char*) calloc (Maxlen, sizeof (char));
 
     while (fgets (cur_str, Maxlen, fpin)){
-        lines->str = (char*) calloc (Maxlen, sizeof (char));   ///->
+        lines->str = (char*) calloc (strlen (cur_str)+1, sizeof (char));   ///->
 
         strcpy (lines->str, cur_str);
         lines->len_str = strlen (cur_str);
