@@ -10,9 +10,9 @@ const int Maxlen = 1000;
 int counter_lines (FILE *fpin){
     assert (fpin != NULL);
 
-    int cnt_lines = 0;
     char *cur_str = (char*) calloc (Maxlen, sizeof (char));
 
+    int cnt_lines = 0;
     while (fgets (cur_str, Maxlen, fpin))
         cnt_lines++;
 
@@ -26,10 +26,10 @@ void read_lines (FILE *fpin, Line *lines){
     char *cur_str = (char*) calloc (Maxlen, sizeof (char));
 
     while (fgets (cur_str, Maxlen, fpin)){
-        (*lines).str = (char*) calloc (Maxlen, sizeof (char));   ///->
+        lines->str = (char*) calloc (Maxlen, sizeof (char));   ///->
 
-        strcpy ((*lines).str, cur_str);
-        (*lines).len_str = strlen (cur_str);
+        strcpy (lines->str, cur_str);
+        lines->len_str = strlen (cur_str);
         lines++;
     }
 
@@ -37,6 +37,11 @@ void read_lines (FILE *fpin, Line *lines){
 }
 
 void write_lines (int cnt_lines, Line *lines){
+    if (!lines){
+        printf ("Structure lines ics NULL");
+        return;
+    }
+
     for (int cur_line = 0; cur_line < cnt_lines; cur_line++){
         printf ("%s", (lines + cur_line)->str);
     }
