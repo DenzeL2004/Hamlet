@@ -1,19 +1,34 @@
 #ifndef _READF_H_
 #define _READF_H_
 
-typedef struct Info_line{
+struct Line{
     char *str;
     int len_str = 0;
-} Line;
+};
 
-int counter_lines (FILE *fpin);
+struct Text_info {
+    long int text_size;
+    char *text_buf;
+    int cnt_lines;
+    Line *lines;
+};
 
-void read_lines (FILE *fpin, Line *lines);
+int Text_definition (FILE *fpin, Text_info *Text);
 
-void write_lines (int cnt_lines, Line *lines);
+int Buffering (FILE *fpin, Text_info *Text);
 
-void qsort_lines (Line *lines, int left, int right);
+int Count_lines (char *buf, int text_size);
 
-void swap_lines (Line *lines, int i, int j);
+int Line_initialization (Text_info *Text);
+
+int Text_write (FILE *fpout, int cnt_lines, Line *lines);
+
+void qsort_lines (Line *lines, int left, int right, int (*comp) (void *, void *));
+
+void swap_lines (Line *lines, int id1, int id2);
+
+int strcomp(const char *str1, const char *str2);
+
+const char *skip_empty(const char *str);
 
 #endif

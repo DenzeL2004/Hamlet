@@ -5,32 +5,23 @@
 
 #include "headers\Readf.h"
 
-const char name_file[] = "hamlet.txt";
+const char *name_file = "hamlet.txt";
 
 int main() {
     FILE *fpin = fopen (name_file, "r");
-
     if (!fpin){
         printf ("File is not open\n");
         return -1;
     }
 
-    Line *lines = nullptr;
-
-    int cnt_lines = counter_lines (fpin);
-    lines = (Line*) calloc (cnt_lines, sizeof (Line));
+    Text_info Text = {};
+    Text_definition (fpin, &Text);
     fclose (fpin);
+    
+    qsort_lines (Text.lines, 0, Text.cnt_lines - 1, (int (*)(void *, void *))strcomp);
+    
+    FILE *fpout = fopen ("ans.txt", "w");
+    Text_write (fpout, Text.cnt_lines, Text.lines);
 
-    fpin = fopen (name_file, "r");
-
-    read_lines (fpin, lines);
-
-    printf ("Count reading lines %d\n", cnt_lines);
-    //write_lines (cnt_lines, lines);
-
-    qsort_lines (lines, 0, cnt_lines-1);
-    write_lines (cnt_lines, lines);
-
-    fclose (fpin);
-    free (lines);
+    fclose (fpout);
 }
