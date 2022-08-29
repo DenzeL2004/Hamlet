@@ -2,95 +2,103 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <ctype.h> 
 
-#include "headers\Readf.h"
+#include "headers\work_with_text.h"
 
 int Text_definition (FILE *fpin, Text_info *Text){
-    assert (fpin != NULL && "File is NULL");
-    assert (Text != NULL && "Text is NULL");
+    assert (fpin != nullptr && "File is nullptr");
+    assert (Text != nullptr && "Text is nullptr");
     
-    if (Buffering (fpin, Text))
-       return -1;
+    if (Create_buffer (fpin, Text)){
+       printf ("Faild create buffer\n");
+       return INIT_BUF;
+    }
 
-    Text->cnt_lines = -1;
-    Text->cnt_lines = Count_lines (Text->text_buf, Text->text_size);
-    if (Text->cnt_lines == -1)
-        return -1;   
+    Text->cnt_lines = Get_count_lines (Text->text_buf);   
     
-    if (Line_initialization (Text))
-        return -1;
+    if (Lines_initialize (Text)){
+        printf ("Failed to complete structure\n");
+        return INIT_LINES;
+    }
 
     return 0;
 }
 
-int Buffering (FILE *fpin, Text_info *Text){
-    assert (fpin != NULL && "File is not NULL");
+int Create_buffer (FILE *fpin, Text_info *Text){
+    assert (fpin != nullptr && "File is not nullptr");
 
-    fseek (fpin, 0, SEEK_END);
-
-    Text->text_size = ftell (fpin) + 1;
+    Text->text_size = Get_file_size (fpin);
     if (Text->text_size == 1L){
-        printf ("%s\n", "Memory not allocated");
-        return -1;
+        printf ("Memory not allocated\n");
+        return MEMORY_ALLOC;
     }
 
-    Text->text_buf = (char *) malloc (Text->text_size);
-    if (Text->text_buf == NULL){
-        printf ("%s\n", "BUFF is NULL");
-        return -1;
+    Text->text_buf = (char *) calloc (Text->text_size, sizeof(char));
+    if (Text->text_buf == nullptr){
+        printf ("BUFF is nullptr\n");
+        return INIT_BUF;
     } 
 
-    fseek (fpin, 0, SEEK_SET);
-    int real_read_char = fread (Text->text_buf, sizeof (char), Text->text_size, fpin);
+    int real_read_char = Write_to_buffer (fpin, Text->text_buf, Text->text_size);
 
     if (*(Text->text_buf + real_read_char - 1) != '\n')
         *(Text->text_buf + real_read_char) = '\n';        
 
     if(!feof (fpin)){
-        printf ("%s\n", "Not all copy to buffer");
-        return -1;
+        printf ("Not all copy to buffer\n");
+        return FILE_READING;
     }
 
     return 0;
 } 
 
-int Count_lines (char *buf, int text_size){
-    assert (buf != NULL && "File is not NULL");
+int Get_file_size (FILE *fpin){
+    fseek (fpin, 0, SEEK_END);
+    return ftell (fpin) + 1;
+}
+
+int Write_to_buffer (FILE *fpin, char *buf, int text_size){
+    fseek (fpin, 0, SEEK_SET);
+    return fread (buf, sizeof (char), text_size, fpin);
+}
+
+int Get_count_lines (const char *buf){
+    assert (buf != nullptr && "File is not nullptr");
     
-    int counter = 0, cnt_ch = 0;
+    int counter = 0, count_ch = 0;
     char ch = 0;
-    while (cnt_ch < text_size){
-        ch = *(buf + cnt_ch);        
+
+    while ((ch = *(buf + count_ch)) != '\0'){     
         if (ch == '\n')
             counter++;
         
-        cnt_ch++;
+        count_ch++;
     }
+
     return counter;
 }
 
-int Line_initialization (Text_info *Text){
+int Lines_initialize (Text_info *Text){
     Text->lines = (Line*) calloc (Text->cnt_lines, sizeof (Line));
     
     char ch = 0;
-    int last_back_slash = -1, count_back_slash = 0, symbols_counter = 0;
+    int last_back_slash = -1, count_back_slash = 0, count_ch = 0;
 
-    while (count_back_slash < Text->cnt_lines){
-        ch = *(Text->text_buf + symbols_counter);
-
+    while ((ch = *(Text->text_buf + count_ch)) != '\0'){
         if (ch == '\n'){
-            *(Text->text_buf + symbols_counter) = '\0';
+            *(Text->text_buf + count_ch) = '\0';
 
-            (Text->lines + count_back_slash)->len_str = symbols_counter - 1 - last_back_slash;
+            (Text->lines + count_back_slash)->len_str = count_ch - 1 - last_back_slash;
 
-            last_back_slash = symbols_counter;
+            last_back_slash = count_ch;
 
-            (Text->lines + count_back_slash)->str = (Text->text_buf + symbols_counter - (Text->lines + count_back_slash)->len_str);
-            
+            (Text->lines + count_back_slash)->str = (Text->text_buf + count_ch - (Text->lines + count_back_slash)->len_str);
+
             count_back_slash++;
         }
-        
-        symbols_counter++;
+
+        count_ch++;
     }
 
     return 0;
@@ -104,27 +112,26 @@ int Text_write (FILE *fpout, int cnt_lines, Line *lines){
     return 0;
 }
 
-void qsort_lines (Line *lines, int left, int right, int (*comp) (void *, void *)){
+void Qsort_lines (Line *lines, int left, int right, int (*comp) (void *, void *)){
     if (left >= right)
         return; 
-    
-    swap_lines (lines, left, (left + right)/2);
-    
+
+    Swap_lines (lines, left, (left + right)/2);
+
     int last = left;
     for (int i = left+1; i <= right; i++){ 
-        if (strcomp((lines + i)->str, (lines + left)->str) < 0){
-            last++;
-            swap_lines(lines, last, i);
+        if ((*comp) (lines + i, lines + left) < 0){
+            Swap_lines (lines, ++last, i);
         }
     }
 
-    swap_lines (lines, left, last);
+    Swap_lines (lines, left, last);
 
-    qsort_lines(lines,     left, last - 1, comp);
-    qsort_lines(lines, last + 1,    right, comp);
+    Qsort_lines (lines,     left, last - 1, comp);
+    Qsort_lines (lines, last + 1,    right, comp);
 }
 
-void swap_lines (Line *lines, int id1, int id2){
+void Swap_lines (Line *lines, int id1, int id2){
     Line temp = {};
 
     temp = lines[id1];
@@ -132,19 +139,76 @@ void swap_lines (Line *lines, int id1, int id2){
     lines[id2] = temp;
 }
 
-int strcomp(const char *str1, const char *str2){
-    str1 = skip_empty (str1);
-    str2 = skip_empty (str2);
+int Strcomp (Line *line1, Line *line2){
+    assert (line1 != line2 && "PTRS is not equals");
+
+    char *str1 = line1->str;
+    char *str2 = line2->str;
+
+    str1 = Skip_empty (str1);
+    str2 = Skip_empty (str2);
     
-    return strcmp (str1, str2);   
+    int empty_str1 = (*str1 == '\0');
+    int empty_str2 = (*str2 == '\0');
+
+    if (empty_str1 && empty_str2)
+        return 0;
+    
+    if (!empty_str1 && empty_str2)
+        return -1;
+        
+    if (empty_str1 && !empty_str2)
+        return 1;
+
+    for (; *str1 == *str2; str1++, str2++)
+        if (*str1 == '\0')
+            return 0;
+
+    return *str1 - *str2;
 }
 
-const char *skip_empty(const char *str){
-    assert (str != NULL);
+int Strcomp_end (Line *line1, Line *line2){
+    assert (line1 != line2 && "PTRS is not equals");
+
+    char *str1 = line1->str + line1->len_str - 1;
+    char *str2 = line2->str + line2->len_str - 1;
+    
+    int empty_str1 = (*str1 == '\0');
+    int empty_str2 = (*str2 == '\0');
+
+    if (empty_str1 && empty_str2)
+        return  0;
+    
+    if (!empty_str1 && empty_str2)
+        return -1;
+        
+    if (empty_str1 && !empty_str2)
+        return  1;
+
+    for (; *str1 == *str2; str1--, str2--)
+        if (str1 == line1->str && str2 == line2->str)
+            return 0;
+    
+    printf ("|%c| |%c| \n", *str1, *str2);
+    return *str1 - *str2;
+}
+
+char *Skip_empty (char *str){
+    assert (str != nullptr);
 
     char ch = 0;
-    while ((ch = *str++) != '\0' && (ch == ' ' || ch == '\t'))
-        continue;;
+    while ((ch = *str++) != '\0' && isspace(ch))
+        continue;
+
+    return str - 1;
+}
+
+char *Skip_empty (char *str){
+    assert (str != nullptr);
+
+    char ch = 0;
+    while ((ch = *str++) != '\0' && isspace(ch))
+        continue;
 
     return str - 1;
 }

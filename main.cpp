@@ -1,27 +1,27 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <assert.h>
 
-#include "headers\Readf.h"
+#include "headers\work_with_text.h"
 
-const char *name_file = "hamlet.txt";
+const char *name_file = "song.txt";
 
 int main() {
     FILE *fpin = fopen (name_file, "r");
     if (!fpin){
         printf ("File is not open\n");
-        return -1;
+        return FILE_READING;
     }
 
     Text_info Text = {};
     Text_definition (fpin, &Text);
     fclose (fpin);
-    
-    qsort_lines (Text.lines, 0, Text.cnt_lines - 1, (int (*)(void *, void *))strcomp);
+
+    Qsort_lines (Text.lines, 0, Text.cnt_lines - 1, (int (*)(void*, void*)) Strcomp_end);
     
     FILE *fpout = fopen ("ans.txt", "w");
     Text_write (fpout, Text.cnt_lines, Text.lines);
 
+    free (Text.text_buf);
+    free (Text.lines);
     fclose (fpout);
 }
