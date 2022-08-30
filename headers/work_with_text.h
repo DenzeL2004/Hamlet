@@ -45,6 +45,7 @@ void Sort_lines(Text_info *text, int (*comp) (const void *, const void *));
 void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, const void *));
 
 void Swap_lines (Line *lines, int id1, int id2);
+
 int Lines_comp (Line *line1, Line *line2);
 
 int Reverse_lines_comp (Line *line1, Line *line2);
