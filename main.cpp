@@ -8,20 +8,34 @@ const char *name_file = "song.txt";
 int main() {
     FILE *fpin = fopen (name_file, "r");
     if (!fpin){
-        printf ("File is not open\n");
-        return FILE_READING;
+        printf ("File fpin is not open\n");
+        return ERR_FILE_OPEN;
     }
 
-    Text_info Text = {};
-    Text_definition (fpin, &Text);
+    Text_info text = {};
+    
+
+    if (Text_read (fpin, &text)){
+        printf ("Structure Text_info was not read\n");
+        return ERR_TEXT_READING;
+    }
+
     fclose (fpin);
 
-    Qsort_lines (Text.lines, 0, Text.cnt_lines - 1, (int (*)(void*, void*)) Strcomp_end);
+    Sort_lines (&text, (int (*)(const void*, const void*)) Lines_comp);
     
     FILE *fpout = fopen ("ans.txt", "w");
-    Text_write (fpout, Text.cnt_lines, Text.lines);
+    if (!fpin){
+        printf ("File fpout is not open\n");
+        return ERR_FILE_OPEN;
+    }
+    
+    if (Text_write (fpout, text.cnt_lines, text.lines)){
+        printf ("Program can't write in file\n");
+        return ERR_WRITING;
+    }
 
-    free (Text.text_buf);
-    free (Text.lines);
+    free (text.text_buf);
+    free (text.lines);
     fclose (fpout);
 }
