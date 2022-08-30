@@ -3,7 +3,7 @@
 
 #include "headers\work_with_text.h"
 
-const char *name_file = "song.txt";
+const char *name_file = "hamlet.txt";
 
 int main() {
     FILE *fpin = fopen (name_file, "r");
