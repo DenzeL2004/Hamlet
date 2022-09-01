@@ -4,10 +4,15 @@
 
 #include "headers\work_with_text.h"
 
-const char *name_file = "hamlet.txt";
+const char *name_file = "song.txt";
 
 int main() {
-    FILE *fpin = fopen (name_file, "r");
+
+    //  -> file names for otutput 
+
+    // log_file_open(name, ...)
+
+    FILE *fpin = fopen (name_file, "rb");      //
     if (!fpin){
         errno = ENOENT;
         Process_error (__LINE__, __FILE__);

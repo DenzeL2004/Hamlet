@@ -24,7 +24,7 @@ struct Text_info {
     Line *lines = nullptr;
 };
 
-int Text_read (FILE *fpin, Text_info *text);
+int Text_read (FILE *fpin, Text_info *text);        ///
 
 int Read_file_to_buffer (FILE *fpin, Text_info *text);
 
@@ -46,7 +46,7 @@ void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, c
 
 void Swap_lines (Line *lines, int id1, int id2);
 
-int Lines_comp (Line *line1, Line *line2);
+int Lines_comp (Line *line1, Line *line2);       //direct_lex_comparator
 
 int Reverse_lines_comp (Line *line1, Line *line2);
 

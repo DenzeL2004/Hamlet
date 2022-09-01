@@ -4,12 +4,13 @@
 #include <assert.h>
 #include <ctype.h> 
 #include <errno.h>
+#include <stdint.h>
 
 #include "headers\work_with_text.h"
 
 int Text_read (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
-    assert (text != nullptr && "Strut Text_info is nullptr");
+    assert (text != nullptr && "Struct Text_info is nullptr");
     
     if (Create_buffer (fpin, text)){
        printf ("Faild create buffer\n");
@@ -17,7 +18,7 @@ int Text_read (FILE *fpin, Text_info *text){
     }
 
     if (Read_file_to_buffer (fpin, text)){
-        printf ("Faild reading from file\n");
+        printf ("Faild reading from file\n");    // fprintf(stderr, ...)
         return ERR_INIT_BUF;
     }
     
@@ -34,9 +35,10 @@ int Text_read (FILE *fpin, Text_info *text){
 int Read_file_to_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
-    int real_read_char = Read_to_buffer (fpin, text->text_buf, text->text_size);
+    int real_read_char = Read_to_buffer (fpin, text->text_buf, text->text_size);     // config.h 
+    printf ("fread %d\n", real_read_char);                                           // #ifdef ... #define logmsg, __VA_ARGS__
 
-    if (*(text->text_buf + real_read_char - 1) != '\n')
+    if (*(text->text_buf + real_read_char - 1) != '\n')                              // 
         *(text->text_buf + real_read_char) = '\n';        
 
     if(!feof (fpin)){
@@ -51,9 +53,10 @@ int Create_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
     text->text_size = Get_file_size (fpin);
+    printf ("Ftell %d \n", text->text_size);
     if (text->text_size == 1L){
         errno = ENOENT;
-        Process_error (__LINE__, __FILE__);
+        Process_error (__LINE__, __FILE__);                 // define 
         return ERR_MEMORY_ALLOC;
     }
 
@@ -92,6 +95,8 @@ int Get_count_lines (const char *buf){
     while ((ch = *(buffer++)) != '\0'){     
         if (ch == '\n')
             counter++;
+        if (ch == '\r')
+            printf ("*\n");
     }
 
     return counter;
@@ -102,7 +107,7 @@ int Lines_initialize (Text_info *text){
     
     char ch = 0;
     char *buffer = text->text_buf;
-    char *str_start = buffer, *str_end = nullptr;
+    char *str_start = buffer, *str_end = nullptr;        //strtok
 
     Line *cur_line = text->lines;
 
@@ -172,9 +177,10 @@ void Swap_lines (Line *lines, int id1, int id2){
     lines[id2] = temp;
 }
 
-void My_swap (void *obj1, void *obj2){
+void My_swap (void *obj1, void *obj2){                         ///
     void *temp = nullptr;
-
+    //uint64_t 
+    
     temp = obj1;
     obj1 = obj2;
     obj2 = temp;
@@ -229,7 +235,7 @@ int Reverse_lines_comp (Line *line1, Line *line2){
     char *str2 = line2->str + line2->len_str;
 
     do{ 
-        str1 = Skip_not_alpha_right (str1, line1->str);
+        str1 = Skip_not_alpha_right (str1, line1->str);             //direct back
         str2 = Skip_not_alpha_right (str2, line2->str);
 
         if (str1 == line1->str || str2 == line2->str)
@@ -259,7 +265,7 @@ char *Skip_not_alpha_right (char *str, char *str_start){
     return str;
 }
 
-void Process_error (int line, const char *file_name){
+void Process_error (int line, const char *file_name){                      // -> log.cpp 1)logfile 2)stderr 
     fprintf (stderr, "In file %s in line %d ERROR: ", file_name, line);
     perror ("");
 }
