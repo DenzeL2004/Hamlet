@@ -50,8 +50,12 @@ int Lines_comp (Line *line1, Line *line2);
 
 int Reverse_lines_comp (Line *line1, Line *line2);
 
+void My_swap (void *obj1, void *obj2);
+
 char *Skip_not_alpha_left (char *str);
 
 char *Skip_not_alpha_right (char *str, char *str_start);
+
+void Process_error (int line, const char *file_name);
 
 #endif

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h> 
+#include <errno.h>
 
 #include "headers\work_with_text.h"
 
@@ -51,7 +52,8 @@ int Create_buffer (FILE *fpin, Text_info *text){
 
     text->text_size = Get_file_size (fpin);
     if (text->text_size == 1L){
-        printf ("Memory not allocated\n");
+        errno = ENOENT;
+        Process_error (__LINE__, __FILE__);
         return ERR_MEMORY_ALLOC;
     }
 
@@ -170,6 +172,14 @@ void Swap_lines (Line *lines, int id1, int id2){
     lines[id2] = temp;
 }
 
+void My_swap (void *obj1, void *obj2){
+    void *temp = nullptr;
+
+    temp = obj1;
+    obj1 = obj2;
+    obj2 = temp;
+}
+
 int Lines_comp (Line *line1, Line *line2){
     assert (line1 != line2 && "line1 and line2 is equals");
 
@@ -196,8 +206,6 @@ int Lines_comp (Line *line1, Line *line2){
             return 0;
 
     }while (*str1++ == *str2++);
-
-    //printf ("|%s| |%s| |%c| |%c| %d\n", line1->str, line2->str, *str1, *str2, *(str1 - 1) - *(str2 - 1));
 
     return *(str1 - 1) - *(str2 - 1);
 }
@@ -229,8 +237,6 @@ int Reverse_lines_comp (Line *line1, Line *line2){
 
     }while (*str1-- == *str2--);
 
-    //printf ("|%s| |%s| |%c| |%c| %d\n", line1->str, line2->str, *str1, *str2, *(str1 - 1) - *(str2 - 1));
-
     return *(str1 + 1) - *(str2 + 1);
 }
 
@@ -251,4 +257,9 @@ char *Skip_not_alpha_right (char *str, char *str_start){
         str--;
 
     return str;
+}
+
+void Process_error (int line, const char *file_name){
+    fprintf (stderr, "In file %s in line %d ERROR: ", file_name, line);
+    perror ("");
 }
