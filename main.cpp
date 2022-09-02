@@ -15,9 +15,19 @@ int main() {
     FILE *fpin = fopen (name_file, "rb");      //
     if (!fpin){
         errno = ENOENT;
-        Process_error (__LINE__, __FILE__);
+        Process_error ();
         return ERR_FILE_OPEN;
     }
+
+    /*char s1[] = "Goodfdhgfhg", s2[] = "Buyoo00000000000000000000000oooo";
+    printf ("%s %s\n", s1, s2);
+    My_swap (s1, s2, sizeof(char));
+    printf ("%s %s\n", s1, s2);*/
+
+    int a = 9, b = 0;
+    printf ("%d %d\n", a, b);
+    My_swap (&a, &b, sizeof(int));
+    printf ("%d %d\n", a, b);
 
     Text_info text = {};
 
@@ -28,18 +38,18 @@ int main() {
 
     fclose (fpin);
 
-    Sort_lines (&text, (int (*)(const void*, const void*)) Lines_comp);
+    Sort_lines (&text, (int (*)(const void*, const void*)) Direct_lex_comparator);
     
     FILE *fpout = fopen ("ans.txt", "w");
     if (!fpout){
         errno = ENOENT;
-        Process_error (__LINE__, __FILE__);
+        Process_error ();
         return ERR_FILE_OPEN;
     }
     
     if (Text_write (fpout, text.cnt_lines, text.lines)){
         errno = EIO;
-        Process_error (__LINE__, __FILE__);
+        Process_error ();
         return ERR_WRITING;
     }
 

@@ -13,19 +13,19 @@ int Text_read (FILE *fpin, Text_info *text){
     assert (text != nullptr && "Struct Text_info is nullptr");
     
     if (Create_buffer (fpin, text)){
-       printf ("Faild create buffer\n");
+       fprintf (stderr, "Faild create buffer\n");
        return ERR_INIT_BUF;
     }
 
     if (Read_file_to_buffer (fpin, text)){
-        printf ("Faild reading from file\n");    // fprintf(stderr, ...)
+        fprintf (stderr, "Faild reading from file\n");    // fprintf(stderr, ...)
         return ERR_INIT_BUF;
     }
     
     text->cnt_lines = Get_count_lines (text->text_buf);   
     
     if (Lines_initialize (text)){
-        printf ("Failed to complete structure\n");
+        fprintf (stderr, "Failed to complete structure\n");
         return ERR_INIT_LINES;
     }
 
@@ -36,13 +36,12 @@ int Read_file_to_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
     int real_read_char = Read_to_buffer (fpin, text->text_buf, text->text_size);     // config.h 
-    printf ("fread %d\n", real_read_char);                                           // #ifdef ... #define logmsg, __VA_ARGS__
-
+                                         // #ifdef ... #define logmsg, __VA_ARGS__
     if (*(text->text_buf + real_read_char - 1) != '\n')                              // 
         *(text->text_buf + real_read_char) = '\n';        
 
     if(!feof (fpin)){
-        printf ("Not all copy to buffer\n");
+        fprintf (stderr, "Not all copy to buffer\n");
         return ERR_FILE_READING;
     }
 
@@ -53,16 +52,15 @@ int Create_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
     text->text_size = Get_file_size (fpin);
-    printf ("Ftell %d \n", text->text_size);
     if (text->text_size == 1L){
         errno = ENOENT;
-        Process_error (__LINE__, __FILE__);                 // define 
+        Process_error ();                 // define 
         return ERR_MEMORY_ALLOC;
     }
 
     text->text_buf = (char *) calloc (text->text_size, sizeof(char));
     if (text->text_buf == nullptr){
-        printf ("Failed to allocted\n");
+        fprintf (stderr, "Failed to allocted\n");
         return ERR_INIT_BUF;
     } 
 
@@ -95,8 +93,6 @@ int Get_count_lines (const char *buf){
     while ((ch = *(buffer++)) != '\0'){     
         if (ch == '\n')
             counter++;
-        if (ch == '\r')
-            printf ("*\n");
     }
 
     return counter;
@@ -177,16 +173,36 @@ void Swap_lines (Line *lines, int id1, int id2){
     lines[id2] = temp;
 }
 
-void My_swap (void *obj1, void *obj2){                         ///
+void My_swap (void *obj1, void *obj2, size_t size_type){                         
+    //uint64_t *_obj1 = (uint64_t*) obj1, *_obj2 = (uint64_t*) obj2, *temp = nullptr;
     void *temp = nullptr;
-    //uint64_t 
-    
-    temp = obj1;
-    obj1 = obj2;
-    obj2 = temp;
+
+    My_memcpy (temp, obj1, size_type);
+    My_memcpy (obj1, obj2, size_type);
+    My_memcpy (obj2, temp, size_type);
 }
 
-int Lines_comp (Line *line1, Line *line2){
+void *My_memcpy (void *dst, void *src, size_t size_type){
+    uint64_t *_dst = (uint64_t*) dst;
+    uint64_t *_src = (uint64_t*) src;
+    
+    int cnt_blocks = size_type / sizeof (uint64_t);
+    for (int i = 0; i < cnt_blocks; i++)
+        *_dst++ = *_src++;
+    
+    uint8_t *_bdst = (uint8_t *) _dst;
+    uint8_t *_bsrc = (uint8_t *) _src;
+    
+    int cnt_bits = size_type % sizeof (uint64_t);
+    for (int i = 0; i < cnt_bits; i++){
+        *_bdst++ = *_bsrc++;
+    }
+
+    return dst;
+}
+
+
+int Direct_lex_comparator (Line *line1, Line *line2){
     assert (line1 != line2 && "line1 and line2 is equals");
 
     int empty_str1 = (line1->len_str == 0);
@@ -205,8 +221,8 @@ int Lines_comp (Line *line1, Line *line2){
     char *str2 = line2->str;
 
     do{ 
-        str1 = Skip_not_alpha_left (str1);
-        str2 = Skip_not_alpha_left (str2);
+        str1 = Skip_not_alpha_dir_begin (str1);
+        str2 = Skip_not_alpha_dir_begin (str2);
 
         if (*str1 == '\0')
             return 0;
@@ -216,7 +232,7 @@ int Lines_comp (Line *line1, Line *line2){
     return *(str1 - 1) - *(str2 - 1);
 }
 
-int Reverse_lines_comp (Line *line1, Line *line2){
+int Reverse_lex_comparator (Line *line1, Line *line2){
     assert (line1 != line2 && "line1 and line2 is equals");
 
     int empty_str1 = (line1->len_str == 0);
@@ -235,8 +251,8 @@ int Reverse_lines_comp (Line *line1, Line *line2){
     char *str2 = line2->str + line2->len_str;
 
     do{ 
-        str1 = Skip_not_alpha_right (str1, line1->str);             //direct back
-        str2 = Skip_not_alpha_right (str2, line2->str);
+        str1 = Skip_not_alpha_dir_back (str1, line1->str);     
+        str2 = Skip_not_alpha_dir_back (str2, line2->str);
 
         if (str1 == line1->str || str2 == line2->str)
             return *str1 - *str2;
@@ -246,7 +262,7 @@ int Reverse_lines_comp (Line *line1, Line *line2){
     return *(str1 + 1) - *(str2 + 1);
 }
 
-char *Skip_not_alpha_left (char *str){
+char *Skip_not_alpha_dir_begin (char *str){
     assert (str != nullptr && "str is nulptr");
 
     char ch = 0;
@@ -256,7 +272,7 @@ char *Skip_not_alpha_left (char *str){
     return str;
 }
 
-char *Skip_not_alpha_right (char *str, char *str_start){
+char *Skip_not_alpha_dir_back (char *str, char *str_start){
     assert (str != nullptr && "str is nulptr");
 
     while (str != str_start && !isalpha(*str))
@@ -264,8 +280,8 @@ char *Skip_not_alpha_right (char *str, char *str_start){
 
     return str;
 }
-
+/*
 void Process_error (int line, const char *file_name){                      // -> log.cpp 1)logfile 2)stderr 
     fprintf (stderr, "In file %s in line %d ERROR: ", file_name, line);
     perror ("");
-}
+}*/
