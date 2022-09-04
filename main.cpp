@@ -5,10 +5,15 @@
 #include "Generals_func\generals.h"
 #include "headers\work_with_text.h"
 #include "headers\log_info.h"
+#include "headers\config.h"
 
 int main(int argc, char *argv[]) {
     Options flags = {};    
     Hamlet_parsing (argc, argv, &flags);
+
+    #ifdef READ_FILE_ONLY
+        flags.Read_on_file = 1;
+    #endif
 
     FILE *fpin = stdin, *fpout = stdout;
 
