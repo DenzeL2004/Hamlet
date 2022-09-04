@@ -2,37 +2,25 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "Generals_func\generals.h"
 #include "headers\work_with_text.h"
+#include "headers\log_info.h"
 
-const char *name_file = "song.txt";
+int main(int argc, char *argv[]) {
+    Options flags = {};    
+    Hamlet_parsing (argc, argv, &flags);
 
-int main() {
+    FILE *fpin = stdin, *fpout = stdout;
 
-    //  -> file names for otutput 
-
-    // log_file_open(name, ...)
-
-    FILE *fpin = fopen (name_file, "rb");      //
-    if (!fpin){
-        errno = ENOENT;
-        Process_error ();
-        return ERR_FILE_OPEN;
+    if (flags.Read_on_file){
+        char *name_file = argv[2];
+        fpin = Open_file (name_file, "rb");
     }
-
-    /*char s1[] = "Goodfdhgfhg", s2[] = "Buyoo00000000000000000000000oooo";
-    printf ("%s %s\n", s1, s2);
-    My_swap (s1, s2, sizeof(char));
-    printf ("%s %s\n", s1, s2);*/
-
-    int a = 9, b = 0;
-    printf ("%d %d\n", a, b);
-    My_swap (&a, &b, sizeof(int));
-    printf ("%d %d\n", a, b);
 
     Text_info text = {};
 
     if (Text_read (fpin, &text)){
-        printf ("Structure Text_info was not read\n");
+        Process_error (ERR_TEXT_READING, LOG_ARGS, "Structure Text_info was not read");
         return ERR_TEXT_READING;
     }
 
@@ -40,16 +28,13 @@ int main() {
 
     Sort_lines (&text, (int (*)(const void*, const void*)) Direct_lex_comparator);
     
-    FILE *fpout = fopen ("ans.txt", "w");
-    if (!fpout){
-        errno = ENOENT;
-        Process_error ();
-        return ERR_FILE_OPEN;
+    if (flags.Write_on_file){
+        char *name_file = argv[4];
+        fpout = Open_file (name_file, "w");
     }
     
     if (Text_write (fpout, text.cnt_lines, text.lines)){
-        errno = EIO;
-        Process_error ();
+        Process_error (ERR_WRITING, LOG_ARGS, "Not everything was written to file");
         return ERR_WRITING;
     }
 
