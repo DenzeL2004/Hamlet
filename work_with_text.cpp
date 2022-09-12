@@ -5,68 +5,80 @@
 #include <ctype.h> 
 
 #include "Generals_func\generals.h"
-#include "headers\config.h"
-#include "headers\log_info.h"
-#include "headers\work_with_text.h"
+#include "include\config.h"
+#include "include\log_info.h"
+#include "include\work_with_text.h"
+
+static int _Read_file_to_buffer (FILE *fpin, Text_info *text);
+
+static int _Create_buffer       (FILE *fpin, Text_info *text);
+
+static long _Get_file_size      (FILE *fpin);
+
+static int _Read_to_buffer      (FILE *fpin, char *buf, long text_size);
+
+static int _Get_count_lines     (const char *buf);
+
+static int _Lines_initialize    (Text_info *text);
 
 int Text_read (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "file fpin nullptr");
     assert (text != nullptr && "struct Text_info is nullptr");
     
-    if (Create_buffer (fpin, text)){
-       Process_error (ERR_INIT_BUF, LOG_ARGS, "Faild create buffer\n");
+    if (_Create_buffer (fpin, text)){
+       Print_error ("Faild create buffer\n");
        return ERR_INIT_BUF;
     }
 
-    if (Read_file_to_buffer (fpin, text)){
-        Process_error (ERR_INIT_BUF, LOG_ARGS, "Faild reading from file\n");
+    if (_Read_file_to_buffer (fpin, text)){
+        Print_error ("Faild reading from file\n");
         return ERR_INIT_BUF;
     }
     
-    text->cnt_lines = Get_count_lines (text->text_buf);   
+    text->cnt_lines = _Get_count_lines (text->text_buf);   
     
-    if (Lines_initialize (text)){
-        Process_error (ERR_INIT_LINES, LOG_ARGS, "Failed to complete structure\n");
+    if (_Lines_initialize (text)){
+        Print_error ("Failed to complete structure\n");
         return ERR_INIT_LINES;
     }
 
     return 0;
 }
 
-int Read_file_to_buffer (FILE *fpin, Text_info *text){
+static int _Read_file_to_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "file fpin nullptr");
 
-    int real_read_char = Read_to_buffer (fpin, text->text_buf, text->text_size);    
+    int real_read_char = _Read_to_buffer (fpin, text->text_buf, text->text_size);    
     if (*(text->text_buf + real_read_char - 1) != '\n')                               
         *(text->text_buf + real_read_char) = '\n';        
 
     if(!feof (fpin)){
-        Process_error (ERR_FILE_READING, LOG_ARGS, "Not all copy to buffer\n");
+        Print_error ("Not all copy to buffer\n");
         return ERR_FILE_READING;
     }
 
     return 0;
 }
 
-int Create_buffer (FILE *fpin, Text_info *text){
+static int _Create_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
-    text->text_size = Get_file_size (fpin);
+    text->text_size = _Get_file_size (fpin);
     if (text->text_size == 1L){
-        Process_error (ERR_FILE_READING, LOG_ARGS, "Not everything was read into the file");             
+        Print_error ("Not everything was read into the file");             
         return ERR_FILE_READING;
     }
 
     text->text_buf = (char *) calloc (text->text_size, sizeof(char));
     if (text->text_buf == nullptr){
-        Process_error (ERR_INIT_BUF, LOG_ARGS, "failed to allocted\n");
+        Print_error ("failed to allocted\n");
         return ERR_INIT_BUF;
     } 
 
     return 0;
 } 
 
-long Get_file_size (FILE *fpin){
+static long _Get_file_size (FILE *fpin){
     assert (fpin != nullptr && "file fpin nullptr");
 
     fseek (fpin, 0, SEEK_END);
@@ -76,12 +88,12 @@ long Get_file_size (FILE *fpin){
     return file_size_type;
 }
 
-int Read_to_buffer (FILE *fpin, char *buf, long text_size){
+static int _Read_to_buffer (FILE *fpin, char *buf, long text_size){
     fseek (fpin, 0, SEEK_SET);
     return fread (buf, sizeof (char), text_size, fpin);
 }
 
-int Get_count_lines (const char *buf){
+static int _Get_count_lines (const char *buf){
     assert (buf != nullptr && "buffer is nullptr");
     
     const char* buffer = buf;
@@ -97,7 +109,7 @@ int Get_count_lines (const char *buf){
     return counter;
 }
 
-int Lines_initialize (Text_info *text){
+static int _Lines_initialize (Text_info *text){
     text->lines = (Line*) calloc (text->cnt_lines, sizeof (Line));
     
     char *str_start = strtok (text->text_buf, "\r\n");
@@ -127,14 +139,6 @@ int Text_write (FILE *fpout, int cnt_lines, Line *lines){
     }
 
     return 0;
-}
-
-void Sort_lines(Text_info *text, int (*comp) (const void *, const void *)){
-    #ifdef MY_SORT
-        Qsort_lines(text->lines, 0, text->cnt_lines - 1, (*comp));
-    #else
-        qsort (text->lines, text->cnt_lines, sizeof (Line), (*comp));
-    #endif
 }
 
 void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, const void *)){
@@ -234,21 +238,4 @@ char *Skip_not_alpha_dir_back (char *str, char *str_start){
         str--;
 
     return str;
-}
-
-int Hamlet_parsing (int argc, char *argv[], Options *flags){
-    while (--argc > 0){
-        argv++;
-
-        if((*argv)[0] == '-'){
-            if (!strcmp (*argv, "-in"))
-                flags->Read_on_file = true;
-            
-            if (!strcmp (*argv, "-out"))
-                flags->Write_on_file = true;
-
-        }
-    }
-
-    return 0;
 }

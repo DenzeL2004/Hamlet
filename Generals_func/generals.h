@@ -25,13 +25,15 @@ const long double Eps = 1e-10; ///< Global constant equal to \f$\ 10^{-9}\f$
  * @brief Represents the status of errors
 */
 enum Errors {
-    ERR_MEMORY_ALLOC = -1,          ///< Memory is not allocated
-    ERR_INIT_BUF     = -2,          ///< Buffer has not been initialized
-    ERR_FILE_READING = -3,          ///< No data was read from the file
-    ERR_INIT_LINES   = -4,          ///< Strings not initialized
-    ERR_TEXT_READING = -5,          ///< Text not initialized
-    ERR_FILE_OPEN    = -6,          ///< File is not open
-    ERR_WRITING      = -7           ///< Data writing failed
+    ERR_MEMORY_ALLOC   = -1,          ///< Memory is not allocated
+    ERR_INIT_BUF       = -2,          ///< Buffer has not been initialized
+    ERR_FILE_READING   = -3,          ///< No data was read from the file
+    ERR_INIT_LINES     = -4,          ///< Strings not initialized
+    ERR_TEXT_READING   = -5,          ///< Text not initialized
+    ERR_FILE_OPEN      = -6,          ///< File is not open
+    ERR_WRITING        = -7,           ///< Data writing failed
+    ERR_MANY_ARGUMENTS = -8,
+    ERR_PARSING        = -9
 };
 
 /**
@@ -39,10 +41,14 @@ enum Errors {
  * @brief Represents the status of flags
 */
 struct Options{
-    bool Read_on_file   = 0;
-    bool Write_on_file = 0;
-};
+    bool read_on_file   = 0;
+    const char *file_input_name  = nullptr;
 
+    bool write_on_file  = 0;
+    const char *file_output_name = nullptr;
+
+    bool info_option    = 0;
+};
 
 /** 
  * @brief Comparison of double variables
@@ -84,7 +90,7 @@ void Print_colour (char const colour[], char const *str, ...);
  * @param [in] argc argument count
  * @param [in] argv argument values
 */
-int Parsing (int argc, char *argv[], Options *flags);
+int Parsing (int argc, char *argv[], Options *option);
 
 /**
  * @brief 
@@ -94,6 +100,8 @@ int Parsing (int argc, char *argv[], Options *flags);
  * @return Pointer on file 
  */
 FILE *Open_file (const char *name_file, const char *mode);
+
+int Process_parsing (Options *options);
 
 /**
  * @brief Swaps the values of variables

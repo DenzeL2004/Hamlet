@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>	
 #include <stdint.h>
 
 #include "Generals.h"
@@ -43,45 +45,19 @@ void Print_colour (char const colour[], char const *str, ...){
 FILE *Open_file (const char *name_file, const char *mode){
     FILE *fp = fopen (name_file, mode);
     if (!fp){
+		errno = ENOENT;
         fprintf (stderr, "Could't open file %s with mode: %s\n", name_file, mode);
-        
+		perror ("\n");
+
         abort ();
     }
 
     return fp;
 }
 
-int Parsing (int argc, char *argv[], Options *flags){
-    while (--argc > 0){
-        ++argv;
-		
-		if ((*argv)[0] == '-'){
-			char ch = 0;
-			while ((ch = *++argv[0])){
-				switch (ch){
-					case 'r':
-						flags->Read_on_file = true;
-						break;
-
-					case 'w':
-						flags->Write_on_file = true;
-						break;
-					
-					default:
-						break;
-				}
-			}
-
-		}
-    }
-
-	return 0;
-}
-
 int My_swap (void *obj1, void *obj2, size_t size_type){                         
     assert (obj1 != NULL && "obj1 is NULL");
 	assert (obj2 != NULL && "obj2 is NULL");
-
 
 	char* _obj1  = (char*) obj1;
 	char* _obj2  = (char*) obj2;
@@ -128,6 +104,60 @@ int My_swap (void *obj1, void *obj2, size_t size_type){
 		_obj2 += sizeof (int8_t);
 
 		size_type -= sizeof (int8_t);
+	}
+
+	return 0;
+}
+
+int Parsing (int argc, char *argv[], Options *option){
+    while (--argc > 0){
+		printf ("%s\n", *argv);
+        argv++;
+
+        if((*argv)[0] == '-'){
+            if (!strcmp (*argv, "-in")){
+                option->read_on_file = true;
+				
+				argv++;
+				argc--;
+
+				option->file_input_name = (const char*) (*argv);
+			}
+			else if (!strcmp (*argv, "-out")){
+                option->write_on_file = true;
+
+				argv++;
+				argc--;
+
+				option->file_output_name = (const char*) (*argv);
+			}
+            else if (!strcmp (*argv, "-h")) {
+                option->info_option = true; 
+			}
+		}
+		else{
+			printf ("Many other arguments\n");
+			return ERR_MANY_ARGUMENTS;
+		}
+    }
+
+    return 0;
+}
+
+int Process_parsing (Options *option){
+	if (option->info_option){
+		printf ("This program supports such options\n");
+
+		printf ("-h: Reports information about all program options. Immediately exits the program when this option is run.\n");
+		printf ("-in: The text will be read from .txt file of the extension. This option is required. If you do not enter it, the program will not start.\n");
+		printf ("-out: The result will be written to a .txt file of the extension.\n");
+		
+		return 0;
+	}
+
+	if (!(option->read_on_file)){
+		printf ("You MUST enter -in, the program will not work without this flag");
+		abort(); 
 	}
 
 	return 0;
