@@ -110,8 +110,9 @@ int My_swap (void *obj1, void *obj2, size_t size_type){
 }
 
 int Parsing (int argc, char *argv[], Options *option){
+	assert (option != nullptr && "Option is not nullptr");
+
     while (--argc > 0){
-		printf ("%s\n", *argv);
         argv++;
 
         if((*argv)[0] == '-'){
@@ -145,6 +146,8 @@ int Parsing (int argc, char *argv[], Options *option){
 }
 
 int Process_parsing (Options *option){
+	assert (option != nullptr && "Option is not nullptr");
+	
 	if (option->info_option){
 		printf ("This program supports such options\n");
 

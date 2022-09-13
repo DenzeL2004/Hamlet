@@ -12,13 +12,13 @@ int main(int argc, char *argv[]) {
     Options options = {};    
 
     if (Parsing (argc, argv, &options)){
-        fprintf (stderr, "Parsing was not succes\n");
+        fprintf (stderr, "Parsing does not succeeded\n");
         return ERR_PARSING;    
     }
     
     Process_parsing (&options);
     
-                                  fpin =  Open_file (options.file_input_name, "rb");
+                                  fpin  = Open_file (options.file_input_name,  "r");
     if (options.file_output_name) fpout = Open_file (options.file_output_name, "w");
     
     Text_info text = {};
@@ -33,7 +33,17 @@ int main(int argc, char *argv[]) {
 
     fclose (fpin);
 
-    Qsort (&text, (int (*)(const void*, const void*)) Direct_lex_comparator);
+    Qsort (&text, (int (*)(const void*, const void*)) Reverse_lex_comparator);
+
+    if (Text_write (fpout, text.cnt_lines, text.lines)){
+        errno = EIO;
+        fprintf (stderr, "Not everything was written to file");
+        perror ("Status error ");
+
+        return ERR_WRITING;
+    }  
+
+    Qsort (&text, (int (*)(const void*, const void*)) Id_comparator);
     
     if (Text_write (fpout, text.cnt_lines, text.lines)){
         errno = EIO;
@@ -41,8 +51,7 @@ int main(int argc, char *argv[]) {
         return ERR_WRITING;
     }
 
-    free (text.text_buf);
-    free (text.lines);
+    Free_buffer (&text);
 
     fclose (fpout);
 

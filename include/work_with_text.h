@@ -18,6 +18,7 @@
 struct Line{
     char *str = nullptr;
     int len_str = 0;
+    int id = 0;
 };
 
 struct Text_info { 
@@ -28,15 +29,19 @@ struct Text_info {
     Line *lines = nullptr;
 };
 
-int Text_read           (FILE *fpin, Text_info *text); 
+int Text_read    (FILE *fpin, Text_info *text); 
 
-int Text_write          (FILE *fpout, int cnt_lines, Line *lines);
+int Text_write   (FILE *fpout, int cnt_lines, Line *lines);
+
+int Free_buffer  (Text_info *text);
 
 void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, const void *));
 
-int Direct_lex_comparator  (Line *line1, Line *line2); 
+int Direct_lex_comparator  (void *line1, void *line2);
 
-int Reverse_lex_comparator (Line *line1, Line *line2);
+int Reverse_lex_comparator (void *line1, void *line2);
+
+int Id_comparator          (Line *line1, Line *line2);
 
 char *Skip_not_alpha_dir_begin  (char *str);
 
