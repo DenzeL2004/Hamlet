@@ -55,6 +55,13 @@ FILE *Open_file (const char *name_file, const char *mode){
     return fp;
 }
 
+int Creat_empty_file (const char *name_file){
+	FILE *fp = fopen (name_file, "w");
+	fclose (fp);
+
+	return 0;
+}
+
 int My_swap (void *obj1, void *obj2, size_t size_type){                         
     assert (obj1 != NULL && "obj1 is NULL");
 	assert (obj2 != NULL && "obj2 is NULL");
@@ -137,7 +144,7 @@ int Parsing (int argc, char *argv[], Options *option){
 			}
 		}
 		else{
-			printf ("Many other arguments\n");
+			fprintf (stderr, "Many other arguments\n");
 			return ERR_MANY_ARGUMENTS;
 		}
     }

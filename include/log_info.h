@@ -8,8 +8,8 @@
 
 #ifdef ERR_REPORTS
 
-    #define Print_error(message)                         \
-        _Print_error (LOG_ARGS, message);
+    #define Print_error(error)                         \
+        _Print_error (LOG_ARGS, (error));
 
 #else
 
@@ -17,6 +17,6 @@
 
 #endif
 
-int _Print_error (const char *file_name, const char *func_name, int line, const char *message);
+int _Print_error (const char *file_name, const char *func_name, int line, int error);
 
 #endif

@@ -8,11 +8,13 @@
 #include "include\config.h"
 
 int main(int argc, char *argv[]) {
+    Creat_empty_file ("logs/logs_info.txt");
+
     FILE *fpin = stdin, *fpout = stdout;
     Options options = {};    
 
     if (Parsing (argc, argv, &options)){
-        fprintf (stderr, "Parsing does not succeeded\n");
+        Print_error (ERR_PARSING);
         return ERR_PARSING;    
     }
     
@@ -48,6 +50,8 @@ int main(int argc, char *argv[]) {
     if (Text_write (fpout, text.cnt_lines, text.lines)){
         errno = EIO;
         fprintf (stderr, "Not everything was written to file");
+        perror ("Status error ");
+
         return ERR_WRITING;
     }
 

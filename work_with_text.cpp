@@ -26,19 +26,19 @@ int Text_read (FILE *fpin, Text_info *text){
     assert (text != nullptr && "struct Text_info is nullptr");
     
     if (_Create_buffer (fpin, text)){
-       Print_error ("Faild create buffer\n");
+       Print_error (ERR_INIT_BUF);
        return ERR_INIT_BUF;
     }
 
     if (_Read_file_to_buffer (fpin, text)){
-        Print_error ("Faild reading from file\n");
+        Print_error (ERR_INIT_BUF);
         return ERR_INIT_BUF;
     }
     
     text->cnt_lines = _Get_count_lines (text->text_buf);   
     
     if (_Lines_initialize (text)){
-        Print_error ("Failed to complete structure\n");
+        Print_error (ERR_INIT_LINES);
         return ERR_INIT_LINES;
     }
 
@@ -53,7 +53,7 @@ static int _Read_file_to_buffer (FILE *fpin, Text_info *text){
         *(text->text_buf + real_read_char) = '\n';        
 
     if(!feof (fpin)){
-        Print_error ("Not all copy to buffer\n");
+        Print_error (ERR_FILE_READING);
         return ERR_FILE_READING;
     }
 
@@ -65,13 +65,13 @@ static int _Create_buffer (FILE *fpin, Text_info *text){
 
     text->text_size = _Get_file_size (fpin);
     if (text->text_size == 1L){
-        Print_error ("Not everything was read into the file");             
+        Print_error (ERR_FILE_READING);             
         return ERR_FILE_READING;
     }
 
     text->text_buf = (char *) calloc (text->text_size, sizeof(char));
     if (text->text_buf == nullptr){
-        Print_error ("failed to allocted\n");
+        Print_error (ERR_INIT_BUF);
         return ERR_INIT_BUF;
     } 
 
