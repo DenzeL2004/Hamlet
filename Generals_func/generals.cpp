@@ -49,17 +49,21 @@ FILE *Open_file (const char *name_file, const char *mode){
         fprintf (stderr, "Could't open file %s with mode: %s\n", name_file, mode);
 		perror ("\n");
 
-        abort ();
+		return nullptr;
     }
 
     return fp;
 }
 
-int Creat_empty_file (const char *name_file){
-	FILE *fp = fopen (name_file, "w");
-	fclose (fp);
+char Close_file (FILE *fp){
+	assert (fp != nullptr && "FILE is nullptr");
 
-	return 0;
+	if (fclose(fp)){
+		fprintf (stderr, "FILE does not close %p\n", fp);
+		return ERR_FILE_CLOSE;
+	}
+
+    return 0;
 }
 
 int My_swap (void *obj1, void *obj2, size_t size_type){                         
@@ -120,6 +124,7 @@ int Parsing (int argc, char *argv[], Options *option){
 	assert (option != nullptr && "Option is not nullptr");
 
     while (--argc > 0){
+
         argv++;
 
         if((*argv)[0] == '-'){
@@ -156,6 +161,7 @@ int Process_parsing (Options *option){
 	assert (option != nullptr && "Option is not nullptr");
 	
 	if (option->info_option){
+		
 		printf ("This program supports such options\n");
 
 		printf ("-h: Reports information about all program options. Immediately exits the program when this option is run.\n");
@@ -167,7 +173,8 @@ int Process_parsing (Options *option){
 
 	if (!(option->read_on_file)){
 		printf ("You MUST enter -in, the program will not work without this flag");
-		abort(); 
+		
+		return ERR_PARSING;
 	}
 
 	return 0;

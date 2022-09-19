@@ -13,10 +13,15 @@
 
 #else
 
-    #define Print_error(message) ""
+    #define Print_error(error)) 
 
 #endif
+int Open_logs_file ();
 
 int _Print_error (const char *file_name, const char *func_name, int line, int error);
+
+const char* Process_error(int error);
+
+int Close_logs_file ();
 
 #endif

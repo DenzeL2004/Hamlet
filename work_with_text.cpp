@@ -63,7 +63,7 @@ static int _Read_file_to_buffer (FILE *fpin, Text_info *text){
 static int _Create_buffer (FILE *fpin, Text_info *text){
     assert (fpin != nullptr && "File fpin nullptr");
 
-    text->text_size = _Get_file_size (fpin);
+    text->text_size = _Get_file_size (fpin) + 1;
     if (text->text_size == 1L){
         Print_error (ERR_FILE_READING);             
         return ERR_FILE_READING;
@@ -82,7 +82,7 @@ static long _Get_file_size (FILE *fpin){
     assert (fpin != nullptr && "file fpin nullptr");
 
     fseek (fpin, 0, SEEK_END);
-    long file_size_type = ftell (fpin) + 1;
+    long file_size_type = ftell (fpin);
     
     rewind (fpin);
     return file_size_type;
@@ -119,7 +119,6 @@ static int _Lines_initialize (Text_info *text){
 
     Line *cur_line = text->lines;
 
-
     while ((ch = *(buffer++)) != '\0'){
         
         if (ch == '\n'){
@@ -141,8 +140,23 @@ static int _Lines_initialize (Text_info *text){
 int Free_buffer (Text_info *text){
     assert (text != nullptr && "Text_info text is nullptr");
 
+    if (text->text_buf == nullptr){
+        Print_error (ERR_RE_ClEARING_MEMORY);
+
+        return ERR_RE_ClEARING_MEMORY;
+    }
+
+    if (text->lines == nullptr){
+        Print_error (ERR_RE_ClEARING_MEMORY);
+
+        return ERR_RE_ClEARING_MEMORY;
+    }
+
     free (text->text_buf);
     free (text->lines);
+
+    text->text_buf = nullptr;
+    text->lines    = nullptr;
 
     return 0;
 }
@@ -157,7 +171,7 @@ int Text_write (FILE *fpout, int cnt_lines, Line *lines){
     return 0;
 }
 
-void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, const void *)){
+void Qsort_lines (Line *lines, int left, int right, comp_t* comp){
     if (left >= right)
         return; 
 
@@ -175,6 +189,31 @@ void Qsort_lines (Line *lines, int left, int right, int (*comp) (const void *, c
 
     Qsort_lines (lines,     left, last - 1, comp);
     Qsort_lines (lines, last + 1,    right, comp);
+}
+
+void My_qsort (void *base, size_t left, size_t right, size_t size_of_element, comp_t *comp){
+    assert (base != nullptr && "base is nullptr");
+
+    if (left >= right){
+        return; 
+    }
+
+    char *_base = (char*) base;
+
+    My_swap ((_base + left * size_of_element), (_base + (left + right)/2 * size_of_element), size_of_element);
+
+    size_t last = left;
+    for (size_t i = left + 1; i <= right; i++){ 
+        if ((*comp) (_base + i * size_of_element, _base + left * size_of_element) < 0){
+            last++;
+            My_swap ((_base + last * size_of_element), (_base + i * size_of_element), size_of_element);
+        }
+    }
+
+    My_swap ((_base + left * size_of_element), (_base + last * size_of_element), size_of_element);
+
+    My_qsort (_base,     left, last, size_of_element, comp);
+    My_qsort (_base, last + 1,    right, size_of_element, comp);
 }
 
 int Direct_lex_comparator (void *line1, void *line2){

@@ -25,19 +25,21 @@ const long double Eps = 1e-10; ///< Global constant equal to \f$\ 10^{-9}\f$
  * @brief Represents the status of errors
 */
 enum Errors {
-    ERR_MEMORY_ALLOC   = -1,          ///< Memory is not allocated
-    ERR_INIT_BUF       = -2,          ///< Buffer has not been initialized
-    ERR_FILE_READING   = -3,          ///< No data was read from the file
-    ERR_INIT_LINES     = -4,          ///< Strings not initialized
-    ERR_TEXT_READING   = -5,          ///< Text not initialized
-    ERR_FILE_OPEN      = -6,          ///< File is not open
-    ERR_WRITING        = -7,           ///< Data writing failed
-    ERR_MANY_ARGUMENTS = -8,
-    ERR_PARSING        = -9
+    ERR_MEMORY_ALLOC        = -1,          ///< Memory is not allocated
+    ERR_INIT_BUF            = -2,          ///< Buffer has not been initialized
+    ERR_FILE_READING        = -3,          ///< Not all data was read from the file
+    ERR_INIT_LINES          = -4,          ///< Lines does not initialize
+    ERR_TEXT_READING        = -5,          ///< Text does not initialize
+    ERR_FILE_OPEN           = -6,          ///< File is not open
+    ERR_FILE_CLOSE          = -7,          ///< File is not close
+    ERR_WRITING             = -8,          ///< Data writing failed
+    ERR_MANY_ARGUMENTS      = -9,          ///< Too many values on the command line
+    ERR_PARSING             = -10,         ///< Parsing does not succeeded
+    ERR_RE_ClEARING_MEMORY  = -13
 };
 
 /**
- * @struct Flags
+ * @struct Options
  * @brief Represents the status of flags
 */
 struct Options{
@@ -85,27 +87,44 @@ double Fix_zero (double num);
 void Print_colour (char const colour[], char const *str, ...);
 
 /** 
- * @brief Paints a line
+ * @brief Parsing comon line
  * @version 1.0.0
  * @param [in] argc argument count
  * @param [in] argv argument values
+ * @param [in] Struct option, which we want to use
+ * @return Return zero, if program worked correctly
 */
 int Parsing (int argc, char *argv[], Options *option);
 
+/** 
+ * @brief Process options
+ * @version 1.0.0
+ * @param [in] Struct option, which we want to use
+ * @return Return zero, if program worked correctly
+*/
+int Process_parsing (Options *options);
+
 /**
- * @brief 
- *  
+ * @brief Opens a file in a specific mode
  * @param [in] name_file Name of file 
  * @param [in] mode Open file access modes
  * @return Pointer on file 
  */
 FILE *Open_file (const char *name_file, const char *mode);
 
-int Process_parsing (Options *options);
+char Close_file (FILE *fp);
+
+/**
+ * @brief Creat empty file
+ * If file exist, clear it
+ * @param [in] name_file Name of file 
+ * @param [in] mode Open file access modes
+ * @return Pointer on file 
+ */
+int Creat_empty_file (const char *name_file);
 
 /**
  * @brief Swaps the values of variables
- * 
  * @param obj1 [in] first variable
  * @param obj2 [in] second variable
  * @param size_type [in] size of variables in bytes
