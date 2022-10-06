@@ -33,7 +33,7 @@ struct Text_info {
     Line *lines = nullptr;
 };
 
-int Text_read    (FILE *fpin, Text_info *text); 
+int Text_read    (int fdin, Text_info *text); 
 
 int Text_write   (FILE *fpout, int cnt_lines, Line *lines);
 

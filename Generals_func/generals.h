@@ -94,7 +94,7 @@ void Print_colour (char const colour[], char const *str, ...);
  * @param [in] Struct option, which we want to use
  * @return Return zero, if program worked correctly
 */
-int Parsing (int argc, char *argv[], Options *option);
+int Parsing (int argc, const char *argv[], Options *option);
 
 /** 
  * @brief Process options
@@ -110,9 +110,14 @@ int Process_parsing (Options *options);
  * @param [in] mode Open file access modes
  * @return Pointer on file 
  */
-FILE *Open_file (const char *name_file, const char *mode);
+FILE *Open_file_ptr (const char *name_file, const char *mode);
 
-char Close_file (FILE *fp);
+/**
+ * @brief Close a file
+ * @param [in] fp Pointer of file 
+ * @return Zero - if closing happened without error 
+ */
+char Close_file_ptr (FILE *fp);
 
 /**
  * @brief Creat empty file
@@ -122,6 +127,10 @@ char Close_file (FILE *fp);
  * @return Pointer on file 
  */
 int Creat_empty_file (const char *name_file);
+
+int Open_file_discriptor (const char *name_file, const int mode);
+
+char Close_file_discriptor (int fd);
 
 /**
  * @brief Swaps the values of variables

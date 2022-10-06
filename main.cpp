@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <locale.h>
+#include <fcntl.h>
 
 #include "Generals_func\generals.h"
 #include "include\work_with_text.h"
 #include "include\log_info.h"
 #include "include\config.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, const char *argv[]) {
 
     setlocale(LC_ALL, "Russian");
 
@@ -30,14 +31,15 @@ int main(int argc, char *argv[]) {
     
     Process_parsing (&options);
     
-    FILE *fpin = nullptr, *fpout = nullptr;
+
+    int fdin = Open_file_discriptor (options.file_input_name, O_RDONLY);
     
-                            fpin  = Open_file (options.file_input_name,  "r");
-    options.write_on_file ? fpout = Open_file (options.file_output_name, "w") : fpout = stdout;
+    FILE *fpout = nullptr;
+    options.write_on_file ? fpout = Open_file_ptr (options.file_output_name, "w") : fpout = stdout;
     
     Text_info text = {};
 
-    if (Text_read (fpin, &text)){
+    if (Text_read (fdin, &text)){
         errno = EACCES;
         fprintf (stderr, "Structure Text_info was not read\n");
         perror ("Status error ");
@@ -45,7 +47,7 @@ int main(int argc, char *argv[]) {
         return ERR_TEXT_READING;
     }
 
-    if (Close_file (fpin)){
+    if (Close_file_discriptor (fdin)){
         Print_error (ERR_FILE_CLOSE);
         return ERR_FILE_CLOSE;
     }
@@ -82,7 +84,7 @@ int main(int argc, char *argv[]) {
 
     Free_buffer (&text);
 
-    if (Close_file (fpout)){
+    if (Close_file_ptr (fpout)){
         Print_error (ERR_FILE_CLOSE);
         return ERR_FILE_CLOSE;
     }

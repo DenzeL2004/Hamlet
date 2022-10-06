@@ -8,7 +8,7 @@ FILE *fp_logs = nullptr;
 
 int Open_logs_file (){
     
-    fp_logs = Open_file ("logs/logs_info.txt", "a");
+    fp_logs = Open_file_ptr ("logs/logs_info.txt", "a");
 
     if (!fp_logs){
         fprintf (stderr, "Logs file does not open\n");
@@ -21,8 +21,7 @@ int Open_logs_file (){
 
 int _Print_error (const char *file_name, const char *func_name, int line, int error) {
     
-    time_t seconds;
-    seconds = time(NULL);
+    time_t seconds = time (NULL) + 3 * 60* 60;
 
     fprintf (fp_logs, "=================================================\n\n");
 
@@ -95,7 +94,11 @@ const char* Process_error(int error){
 
 int Close_logs_file (){
 
-    if (Close_file (fp_logs)){
+    time_t seconds = time (NULL)  + 3 * 60* 60;;   
+
+    fprintf (fp_logs, "Time close logs file: %s\n\n", asctime(gmtime(&seconds))); 
+
+    if (Close_file_ptr (fp_logs)){
         fprintf (stderr, "Logs file does not close\n");
 
         return ERR_FILE_OPEN;

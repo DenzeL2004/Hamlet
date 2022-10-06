@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>	
 #include <stdint.h>
+#include <fcntl.h>
 
 #include "Generals.h"
 
@@ -42,7 +43,10 @@ void Print_colour (char const colour[], char const *str, ...){
     printf ("%s", RESET);
 }
 
-FILE *Open_file (const char *name_file, const char *mode){
+FILE *Open_file_ptr (const char *name_file, const char *mode){
+	assert (name_file != nullptr && "name open file is nullptr");
+	assert (mode != nullptr && "specifier mod open file is nullptr");
+
     FILE *fp = fopen (name_file, mode);
     if (!fp){
 		errno = ENOENT;
@@ -55,11 +59,37 @@ FILE *Open_file (const char *name_file, const char *mode){
     return fp;
 }
 
-char Close_file (FILE *fp){
+char Close_file_ptr (FILE *fp){
 	assert (fp != nullptr && "FILE is nullptr");
 
 	if (fclose(fp)){
 		fprintf (stderr, "FILE does not close %p\n", fp);
+		return ERR_FILE_CLOSE;
+	}
+
+    return 0;
+}
+
+int Open_file_discriptor (const char *name_file, const int mode){
+	assert (name_file != nullptr && "name open file is nullptr");
+
+	int fd = open (name_file, mode);
+    if (fd == -1){
+		errno = ENOENT;
+        fprintf (stderr, "Could't get handel of file %s with mode: %d\n", name_file, mode);
+		perror ("\n");
+
+		return ERR_FILE_OPEN;
+    }
+
+    return fd;
+}
+
+char Close_file_discriptor (int fd){
+	assert (fd  >= 0 && "discriptor is a negative number");
+
+	if (close(fd)){
+		fprintf (stderr, "FILE does not close %d\n", fd);
 		return ERR_FILE_CLOSE;
 	}
 
@@ -120,7 +150,7 @@ int My_swap (void *obj1, void *obj2, size_t size_type){
 	return 0;
 }
 
-int Parsing (int argc, char *argv[], Options *option){
+int Parsing (int argc, const char *argv[], Options *option){
 	assert (option != nullptr && "Option is not nullptr");
 
     while (--argc > 0){

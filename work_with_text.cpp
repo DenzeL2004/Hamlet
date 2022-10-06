@@ -3,38 +3,37 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h> 
+#include <sys/stat.h>
+#include <io.h>
 
 #include "Generals_func\generals.h"
 #include "include\config.h"
 #include "include\log_info.h"
 #include "include\work_with_text.h"
 
-static int _Read_file_to_buffer (FILE *fpin, Text_info *text);
+static int _Read_file_to_buffer (int fdin, Text_info *text);
 
-static int _Create_buffer       (FILE *fpin, Text_info *text);
+static int _Create_buffer       (int fdin, Text_info *text);
 
-static long _Get_file_size      (FILE *fpin);
+static int _Work_with_bufer     (int fdin, Text_info *text);
 
-static int _Read_to_buffer      (FILE *fpin, char *buf, long text_size);
+static long _Get_file_size      (int fdin);
+
+static int _Read_to_buffer      (int fdin, char *buf, long text_size);
 
 static int _Get_count_lines     (const char *buf);
 
 static int _Lines_initialize    (Text_info *text);
 
-int Text_read (FILE *fpin, Text_info *text){
-    assert (fpin != nullptr && "file fpin nullptr");
+int Text_read (int fdin, Text_info *text){
+    assert (fdin >= 0 && "fdin is negative number");
     assert (text != nullptr && "struct Text_info is nullptr");
     
-    if (_Create_buffer (fpin, text)){
-       Print_error (ERR_INIT_BUF);
-       return ERR_INIT_BUF;
-    }
-
-    if (_Read_file_to_buffer (fpin, text)){
+    if (_Work_with_bufer (fdin, text)){
         Print_error (ERR_INIT_BUF);
         return ERR_INIT_BUF;
     }
-    
+
     text->cnt_lines = _Get_count_lines (text->text_buf);   
     
     if (_Lines_initialize (text)){
@@ -45,31 +44,50 @@ int Text_read (FILE *fpin, Text_info *text){
     return 0;
 }
 
-static int _Read_file_to_buffer (FILE *fpin, Text_info *text){
-    assert (fpin != nullptr && "file fpin nullptr");
+static int _Work_with_bufer (int fdin, Text_info *text){
+    assert (fdin >= 0 && "fdin is negative number");
+    assert (text != nullptr && "struct Text_info is nullptr");
+    
+    if (_Create_buffer (fdin, text)){
+       Print_error (ERR_INIT_BUF);
+       return ERR_INIT_BUF;
+    }
 
-    int real_read_char = _Read_to_buffer (fpin, text->text_buf, text->text_size);    
-    if (*(text->text_buf + real_read_char - 1) != '\n')                               
-        *(text->text_buf + real_read_char) = '\n';        
-
-    if(!feof (fpin)){
-        Print_error (ERR_FILE_READING);
-        return ERR_FILE_READING;
+    if (_Read_file_to_buffer (fdin, text)){
+        Print_error (ERR_INIT_BUF);
+        return ERR_INIT_BUF;
     }
 
     return 0;
 }
 
-static int _Create_buffer (FILE *fpin, Text_info *text){
-    assert (fpin != nullptr && "File fpin nullptr");
+static int _Read_file_to_buffer (int fdin, Text_info *text){
+    assert (fdin >= 0 && "fdin is negative number");
+    assert (text != nullptr && "struct Text_info is nullptr");
 
-    text->text_size = _Get_file_size (fpin) + 1;
+    int real_read_char = _Read_to_buffer (fdin, text->text_buf, text->text_size);    
+
+    if(real_read_char == -1){
+        Print_error (ERR_FILE_READING);
+        return ERR_FILE_READING;
+    }
+   
+    if (*(text->text_buf + real_read_char - 1) != '\n')                               
+        *(text->text_buf + real_read_char) = '\n';   
+
+    return 0;
+}
+
+static int _Create_buffer (int fdin, Text_info *text){
+    assert (fdin >= 0 && "fdin is negative number");
+
+    text->text_size = _Get_file_size (fdin) + 1;
     if (text->text_size == 1L){
         Print_error (ERR_FILE_READING);             
         return ERR_FILE_READING;
     }
 
-    text->text_buf = (char *) calloc (text->text_size, sizeof(char));
+    text->text_buf = (char*) calloc (text->text_size, sizeof(char));
     if (text->text_buf == nullptr){
         Print_error (ERR_INIT_BUF);
         return ERR_INIT_BUF;
@@ -78,19 +96,26 @@ static int _Create_buffer (FILE *fpin, Text_info *text){
     return 0;
 } 
 
-static long _Get_file_size (FILE *fpin){
-    assert (fpin != nullptr && "file fpin nullptr");
+static long _Get_file_size (int fdin){
+    assert (fdin >= 0 && "fdin is negative number");
 
-    fseek (fpin, 0, SEEK_END);
+    struct stat file_info = {};
+    fstat (fdin, &file_info);
+
+    return file_info.st_size;
+
+    /*fseek (fpin, 0, SEEK_END);
     long file_size_type = ftell (fpin);
     
     rewind (fpin);
-    return file_size_type;
+    return file_size_type;*/
 }
 
-static int _Read_to_buffer (FILE *fpin, char *buf, long text_size){
-    fseek (fpin, 0, SEEK_SET);
-    return fread (buf, sizeof (char), text_size, fpin);
+static int _Read_to_buffer (int fdin, char *buf, long text_size){
+    assert (fdin >= 0 && "fdin is negative number");
+    assert (buf  != nullptr && "Buffer is nullptr");
+    
+    return read (fdin, buf, text_size);
 }
 
 static int _Get_count_lines (const char *buf){
@@ -171,49 +196,29 @@ int Text_write (FILE *fpout, int cnt_lines, Line *lines){
     return 0;
 }
 
-void Qsort_lines (Line *lines, int left, int right, comp_t* comp){
-    if (left >= right)
-        return; 
-
-    My_swap ((lines + left), (lines + (left + right)/2), sizeof (Line));
-
-    int last = left;
-    for (int i = left+1; i <= right; i++){ 
-        if ((*comp) (lines + i, lines + left) < 0){
-            last++;
-            My_swap ((lines + last), (lines + i), sizeof (Line));
-        }
-    }
-
-    My_swap ((lines + left), (lines + last), sizeof (Line));
-
-    Qsort_lines (lines,     left, last - 1, comp);
-    Qsort_lines (lines, last + 1,    right, comp);
-}
-
-void My_qsort (void *base, size_t left, size_t right, size_t size_of_element, comp_t *comp){
-    assert (base != nullptr && "base is nullptr");
+void My_qsort (void *data, size_t left, size_t right, size_t size_of_element, comp_t *comp){
+    assert (data != nullptr && "data is nullptr");
 
     if (left >= right){
         return; 
     }
 
-    char *_base = (char*) base;
+    char *_data = (char*) data;
 
-    My_swap ((_base + left * size_of_element), (_base + (left + right)/2 * size_of_element), size_of_element);
+    My_swap ((_data + left * size_of_element), (_data + (left + right)/2 * size_of_element), size_of_element);
 
     size_t last = left;
     for (size_t i = left + 1; i <= right; i++){ 
-        if ((*comp) (_base + i * size_of_element, _base + left * size_of_element) < 0){
+        if ((*comp) (_data + i * size_of_element, _data + left * size_of_element) < 0){
             last++;
-            My_swap ((_base + last * size_of_element), (_base + i * size_of_element), size_of_element);
+            My_swap ((_data + last * size_of_element), (_data + i * size_of_element), size_of_element);
         }
     }
 
-    My_swap ((_base + left * size_of_element), (_base + last * size_of_element), size_of_element);
+    My_swap ((_data + left * size_of_element), (_data + last * size_of_element), size_of_element);
 
-    My_qsort (_base,     left, last, size_of_element, comp);
-    My_qsort (_base, last + 1,    right, size_of_element, comp);
+    My_qsort (_data,     left, last, size_of_element, comp);
+    My_qsort (_data, last + 1,    right, size_of_element, comp);
 }
 
 int Direct_lex_comparator (void *line1, void *line2){
